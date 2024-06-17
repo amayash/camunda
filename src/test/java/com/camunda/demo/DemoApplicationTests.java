@@ -2,8 +2,7 @@ package com.camunda.demo;
 
 import com.camunda.demo.configuration.properties.RestConfigurationProperties;
 import com.camunda.demo.dto.ConfirmOrderDto;
-import com.camunda.demo.kafka.KafkaConsumerHelper;
-import com.camunda.demo.kafka.KafkaProducerHelper;
+import com.camunda.demo.kafka.KafkaConsumer;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.camunda.bpm.engine.HistoryService;
@@ -43,10 +42,7 @@ public class DemoApplicationTests {
     private RuntimeService runtimeService;
 
     @Autowired
-    private KafkaConsumerHelper kafkaConsumerHelper;
-
-    @Autowired
-    private KafkaProducerHelper kafkaProducerHelper;
+    private KafkaConsumer kafkaConsumer;
 
     @RegisterExtension
     static WireMockExtension wireMockProductServer = WireMockExtension.newInstance()

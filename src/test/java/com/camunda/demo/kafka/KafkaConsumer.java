@@ -14,8 +14,8 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class KafkaConsumerHelper {
-    private final KafkaProducerHelper kafkaProducerHelper;
+public class KafkaConsumer {
+    private final KafkaProducer kafkaProducer;
 
     @KafkaListener(topics = Producer.PRODUCER_TOPIC, containerFactory = "kafkaListenerContainerFactory")
     public void listenGroupTopic(byte[] message) throws IOException {
@@ -27,7 +27,7 @@ public class KafkaConsumerHelper {
             final OrderCheckBusinessKeyEventData eventSource = objectMapper.readValue(message, OrderCheckBusinessKeyEventData.class);
             log.info("EventSource: {}", eventSource);
             String businessKey = eventSource.getBusinessKey();
-            kafkaProducerHelper.sendEvent(Consumer.CONSUMER_TOPIC, businessKey,
+            kafkaProducer.sendEvent(Consumer.CONSUMER_TOPIC, businessKey,
                     new OrderComplianceResultEventData(businessKey, true));
         } catch (JsonProcessingException e) {
             log.error("Couldn't parse message: {}; exception: ", new String(message), e);
