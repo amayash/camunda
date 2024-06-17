@@ -24,6 +24,7 @@ public class Delivery implements JavaDelegate {
             delegateExecution.setVariable("orderDeliveryDate",
                     deliveryServiceClient.getDate(new SaveDeliveryDto(dto.getOrderDeliveryAddress(), dto.getOrderId())));
         } catch (Exception e) {
+            log.error("Error in delivery: {}", e.getMessage());
             throw new BpmnError("errorEventId");
         }
     }

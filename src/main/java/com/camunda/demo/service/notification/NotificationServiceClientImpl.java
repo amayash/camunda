@@ -17,7 +17,7 @@ public class NotificationServiceClientImpl implements NotificationServiceClient 
     public void sendOrderCancellationNotification(OrderCancellationDto order) {
         notificationServiceWebClient
                 .post()
-                .uri(properties.notificationServiceProperties().getHost() + properties.notificationServiceProperties().getMethods().getOrderCancellation())
+                .uri(properties.notificationServiceProperties().getMethods().getOrderCancellation())
                 .bodyValue(order)
                 .retrieve()
                 .bodyToMono(Void.class)
@@ -28,7 +28,7 @@ public class NotificationServiceClientImpl implements NotificationServiceClient 
     public void sendRequestCancellationNotification(RequestCancellationDto dto) {
         notificationServiceWebClient
                 .post()
-                .uri(properties.notificationServiceProperties().getHost() + properties.notificationServiceProperties().getMethods().getRequestCancellation())
+                .uri(properties.notificationServiceProperties().getMethods().getRequestCancellation())
                 .bodyValue(dto)
                 .retrieve()
                 .bodyToMono(Void.class)

@@ -1,19 +1,10 @@
 package com.camunda.demo.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class SaveAgreementDto {
-    @NotBlank(message = "CRM is required")
-    private String CRM;
+    private final String CRM;
 
-    @NotBlank(message = "Account number is required")
-    private String accountNumber;
+    private final String accountNumber;
 }

@@ -20,7 +20,7 @@ public class DeliveryServiceClientImpl implements DeliveryServiceClient {
     public LocalDate getDate(SaveDeliveryDto deliveryDto) {
         return deliveryServiceWebClient
                 .post()
-                .uri(properties.deliveryServiceProperties().getHost() + properties.deliveryServiceProperties().getMethods().getGetDate())
+                .uri(properties.deliveryServiceProperties().getMethods().getGetDate())
                 .bodyValue(deliveryDto)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<LocalDate>() {})
@@ -31,7 +31,7 @@ public class DeliveryServiceClientImpl implements DeliveryServiceClient {
     public void cancellation(UUID uuid) {
         deliveryServiceWebClient
                 .delete()
-                .uri(properties.deliveryServiceProperties().getHost() + properties.deliveryServiceProperties().getMethods().getCancellation() + "/" + uuid)
+                .uri(properties.deliveryServiceProperties().getMethods().getCancellation() + "/" + uuid)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .subscribe();

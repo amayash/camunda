@@ -21,9 +21,10 @@ public class OrderResultComplianceEventHandler implements EventHandler<OrderComp
 
     @Override
     public void handleEvent(OrderComplianceResultEventData eventSource) {
+        log.info("Order result compliance event: {}", eventSource);
         runtimeService.createMessageCorrelation("continueProcessMsg")
                 .processInstanceBusinessKey(eventSource.getBusinessKey())
-                .setVariable("complianceResultFailed", eventSource.getComplianceResult())
+                .setVariable("complianceResultFailed", !eventSource.getComplianceResult())
                 .correlate();
     }
 }

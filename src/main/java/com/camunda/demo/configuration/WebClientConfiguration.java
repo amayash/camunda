@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @RequiredArgsConstructor
 public class WebClientConfiguration {
-    public static final int TIMEOUT = 30000;
+    public static final int TIMEOUT = 5000;
     private final RestConfigurationProperties properties;
 
     @Bean
-    public WebClient agreementServiceWebClient() {
+    public WebClient agreementServiceWebClient(WebClient.Builder webClientBuilder) {
         final var tcpClient = TcpClient
                 .create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT)

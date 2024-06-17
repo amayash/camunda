@@ -1,4 +1,6 @@
 server:
+  servlet:
+    context-path: /
   port: 8082
 
 spring:
@@ -54,21 +56,21 @@ app:
       methods:
         change-status: /status
       mock:
-        enabled: true
+        enabled: false
     agreement-service:
-      host: http://localhost:4321
+      host: http://localhost:8092
       methods:
         registration-agreement: /agreements/registration
         delete-agreement: /agreements/delete
       mock:
         enabled: false
     delivery-service:
-      host: http://localhost:9092
+      host: http://localhost:8095
       methods:
         get-date: /deliveries
         cancellation: /deliveries
       mock:
-        enabled: true
+        enabled: false
     notification-service:
       host: http://localhost:8097
       methods:
@@ -77,8 +79,8 @@ app:
       mock:
         enabled: true
     payment-service:
-      host: http://localhost:9097
+      host: http://localhost:8094
       methods:
         payment: /payment
       mock:
-        enabled: true
+        enabled: false

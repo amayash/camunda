@@ -18,7 +18,7 @@ public class ProductServiceClientImpl implements ProductServiceClient {
     public void changeStatus(UUID id, SaveOrderStatusDto dto) {
         productServiceWebClient
                 .patch()
-                .uri(properties.productServiceProperties().getHost() + "/orders/" + id + properties.productServiceProperties().getMethods().getChangeStatus())
+                .uri("/orders/" + id + properties.productServiceProperties().getMethods().getChangeStatus())
                 .bodyValue(dto)
                 .retrieve()
                 .bodyToMono(Void.class)

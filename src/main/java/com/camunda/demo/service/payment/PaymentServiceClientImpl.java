@@ -17,7 +17,7 @@ public class PaymentServiceClientImpl implements PaymentServiceClient {
     public Boolean payment(SavePaymentDto dto) {
         return paymentServiceWebClient
                 .post()
-                .uri(properties.paymentServiceProperties().getHost() + properties.paymentServiceProperties().getMethods().getPayment())
+                .uri(properties.paymentServiceProperties().getMethods().getPayment())
                 .bodyValue(dto)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Boolean>() {})
