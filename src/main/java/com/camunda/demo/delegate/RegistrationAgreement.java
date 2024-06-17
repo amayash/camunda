@@ -28,6 +28,7 @@ public class RegistrationAgreement implements JavaDelegate {
                                     dto.getCustomerCRM()
                             )));
         } catch (Exception e) {
+            log.error("Error while saving agreement: {}", e.getMessage());
             throw new BpmnError("errorEventId");
         }
     }

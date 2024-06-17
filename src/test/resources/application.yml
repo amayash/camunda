@@ -56,19 +56,19 @@ app:
       mock:
         enabled: true
     agreement-service:
-      host: http://localhost:9099
+      host: http://localhost:4321
       methods:
         registration-agreement: /agreements/registration
         delete-agreement: /agreements/delete
       mock:
         enabled: false
     delivery-service:
-      host: http://localhost:9097
+      host: http://localhost:9092
       methods:
         get-date: /deliveries
         cancellation: /deliveries
       mock:
-        enabled: false
+        enabled: true
     notification-service:
       host: http://localhost:8097
       methods:
@@ -77,8 +77,8 @@ app:
       mock:
         enabled: true
     payment-service:
-      host: http://localhost:9098
+      host: http://localhost:9097
       methods:
         payment: /payment
       mock:
-        enabled: false
+        enabled: true

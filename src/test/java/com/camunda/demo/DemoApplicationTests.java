@@ -7,18 +7,20 @@ import com.camunda.demo.kafka.event.Event;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.http.MediaType;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -31,31 +33,34 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest()
+@EmbeddedKafka(partitions = 1, topics = {"producer_topic", "consumer_topic"}, brokerProperties = {"listeners=PLAINTEXT://localhost:9091", "port=9091"})
 @WireMockTest
 @DirtiesContext
-@EnableKafka
+@Slf4j
 public class DemoApplicationTests {
     @Autowired
-    RuntimeService runtimeService;
+    private RuntimeService runtimeService;
+
     @Autowired
-    KafkaConsumerHelper kafkaConsumerHelper;
+    private KafkaConsumerHelper kafkaConsumerHelper;
+
     @Autowired
-    KafkaProducerHelper kafkaProducerHelper;
+    private KafkaProducerHelper kafkaProducerHelper;
 
     @RegisterExtension
     static WireMockExtension wireMockAgreementServer = WireMockExtension.newInstance()
-            .options(wireMockConfig().port(9099))
+            .options(wireMockConfig().port(4321))
             .build();
 
     @RegisterExtension
     static WireMockExtension wireMockPaymentServer = WireMockExtension.newInstance()
-            .options(wireMockConfig().port(9098))
+            .options(wireMockConfig().port(4322))
             .build();
 
     @RegisterExtension
     static WireMockExtension wireMockDeliveryServer = WireMockExtension.newInstance()
-            .options(wireMockConfig().port(9097))
+            .options(wireMockConfig().port(4323))
             .build();
 
     private static final String PROCESS_KEY = "DemoCamundaProcessKey";
@@ -71,8 +76,48 @@ public class DemoApplicationTests {
     private static final UUID agreementId = UUID.randomUUID();
     private static final LocalDate deliveryDate = LocalDate.now().plusDays(7);
 
+    @BeforeEach
+    private void setupWireMockServers() {
+        // регистрируем договор
+        String agreementRegistrationRequest = "{\"crm\":" + dto.getCustomerCRM() +
+                ", \"accountNumber\":" + dto.getCustomerAccountNumber() + "}";
+//        wireMockAgreementServer.stubFor(
+//                post(urlEqualTo("/agreements/registration"))
+//                        .withRequestBody(new EqualToPattern(agreementRegistrationRequest))
+//                        .willReturn(aResponse()
+//                                .withStatus(200)
+//                                .withBody(agreementId.toString())));
+        wireMockAgreementServer.stubFor(post(urlEqualTo("/agreements/registration"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withStatus(200)
+                        .withBody(UUID.randomUUID().toString())));
+
+        // получаем дату доставки
+        String deliveryGetDateRequest = "{\"address\":" + dto.getOrderDeliveryAddress() +
+                ",\"orderId\":" + dto.getOrderId() + "}";
+        wireMockDeliveryServer.stubFor(
+                post(urlEqualTo("/deliveries"))
+                        //.withRequestBody(new EqualToPattern(deliveryGetDateRequest))
+                        .willReturn(aResponse()
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                //.withStatus(200)
+                                .withBody(deliveryDate.toString())));
+
+        // производим оплату
+        String paymentPaymentRequest = "{\"orderId\":" + dto.getOrderId() +
+                ", \"totalSum\":" + dto.getOrderPrice() +
+                ", \"accountNumber\":" + dto.getCustomerAccountNumber() + "}";
+        wireMockPaymentServer.stubFor(
+                post(urlEqualTo("/payment"))
+                        .withRequestBody(new EqualToPattern(paymentPaymentRequest))
+                        .willReturn(aResponse()
+                                .withStatus(200)
+                                .withBody(Boolean.valueOf(true).toString())));
+    }
+
     @Test
-    public void test() throws IOException, InterruptedException {
+    public void test() {
         // Запускаем процесс
         ProcessInstance processInstance = runtimeService
                 .createProcessInstanceByKey(PROCESS_KEY)
@@ -82,17 +127,16 @@ public class DemoApplicationTests {
 
         String businessKey = processInstance.getBusinessKey();
         assertNotNull(businessKey);
-        setupWireMockServers();
-        String topic = "producer_topic";
-        byte[] testMessageGet = ("{\"login:\"" + dto.getCustomerLogin() +
-                ",\"CRM:\"" + dto.getCustomerCRM() +
-                ",\"businessKey:\"" + businessKey +
-                "}").getBytes(StandardCharsets.UTF_8);
-
-        byte[] testMessageSend = ("{\"businessKey:\"" + businessKey +
-                ",\"complianceResult:\"" + dto.getCustomerCRM() +
-                ",\"event:\"" + Event.RESULT_COMPLIANCE +
-                "}").getBytes(StandardCharsets.UTF_8);
+//        String topic = "producer_topic";
+//        byte[] testMessageGet = ("{\"login:\"" + dto.getCustomerLogin() +
+//                ",\"CRM:\"" + dto.getCustomerCRM() +
+//                ",\"businessKey:\"" + businessKey +
+//                "}").getBytes(StandardCharsets.UTF_8);
+//
+//        byte[] testMessageSend = ("{\"businessKey:\"" + businessKey +
+//                ",\"complianceResult:\"" + dto.getCustomerCRM() +
+//                ",\"event:\"" + Event.RESULT_COMPLIANCE +
+//                "}").getBytes(StandardCharsets.UTF_8);
 
         // Отправка сообщения
         // kafkaProducerHelper.sendMessage(topic, testMessage);
@@ -100,71 +144,5 @@ public class DemoApplicationTests {
         //assertNotNull(receivedMessage);
         //assertArrayEquals(testMessage, receivedMessage);
         //kafkaConsumerConfig();
-    }
-
-    /*
-        private void kafkaConsumerConfig() throws InterruptedException, IOException {
-            // Настройка Consumer для тестирования
-            Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("group1", "true", embeddedKafkaBroker);
-            consumerProps.put("key.deserializer", StringDeserializer.class);
-            consumerProps.put("value.deserializer", ByteArrayDeserializer.class);
-            ConsumerFactory<String, byte[]> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerProps);
-            ContainerProperties containerProperties = new ContainerProperties(Producer.PRODUCER_TOPIC);
-            KafkaMessageListenerContainer<String, byte[]> messageListenerContainer = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
-
-            final ObjectMapper objectMapper = new ObjectMapper();
-            BlockingQueue<ConsumerRecord<String, byte[]>> records = new LinkedBlockingQueue<>();
-            messageListenerContainer.setupMessageListener((MessageListener<String, byte[]>) record -> {
-                try {
-                    System.out.println("Received message: " + objectMapper.readValue(record.value(), OrderCheckBusinessKeyEventData.class));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                records.add(record);
-            });
-
-            // Запуск Consumer
-            messageListenerContainer.start();
-            ContainerTestUtils.waitForAssignment(messageListenerContainer, embeddedKafkaBroker.getPartitionsPerTopic());
-
-            // Проверка полученного сообщения
-            ConsumerRecord<String, byte[]> received = records.poll(10, TimeUnit.SECONDS);
-            assertThat(received).isNotNull();
-            assert received != null;
-
-            assertThat(objectMapper.readValue(received.value(), OrderCheckBusinessKeyEventData.class).getLogin()).isEqualTo(dto.getCustomerLogin());
-        }
-    */
-    private void setupWireMockServers() {
-        // регистрируем договор
-        String agreementRegistrationRequest = "{\"crm\":" + dto.getCustomerCRM() +
-                ", \"accountNumber\":" + dto.getCustomerAccountNumber() + "}";
-        wireMockAgreementServer.stubFor(
-                post(urlEqualTo("/agreements/registration"))
-                        .withRequestBody(new EqualToPattern(agreementRegistrationRequest))
-                        .willReturn(aResponse()
-                                .withStatus(200)
-                                .withBody(agreementId.toString())));
-
-        // получаем дату доставки
-        String deliveryGetDateRequest = "{\"address\":" + dto.getOrderDeliveryAddress() +
-                ",\"orderId\":" + dto.getOrderId() + "}";
-        wireMockDeliveryServer.stubFor(
-                post(urlEqualTo("/deliveries"))
-                        .withRequestBody(new EqualToPattern(deliveryGetDateRequest))
-                        .willReturn(aResponse()
-                                .withStatus(200)
-                                .withBody(deliveryDate.toString())));
-
-        // производим оплату
-        String paymentPaymentRequest = "{\"orderId\":" + dto.getOrderId() +
-                ", \"totalSum\":" + dto.getOrderPrice() +
-                ", \"accountNumber\":" + dto.getCustomerAccountNumber() + "}";
-        wireMockAgreementServer.stubFor(
-                post(urlEqualTo("/payment"))
-                        .withRequestBody(new EqualToPattern(paymentPaymentRequest))
-                        .willReturn(aResponse()
-                                .withStatus(200)
-                                .withBody(Boolean.valueOf(true).toString())));
     }
 }

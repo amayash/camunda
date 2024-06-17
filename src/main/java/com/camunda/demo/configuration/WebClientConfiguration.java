@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @RequiredArgsConstructor
 public class WebClientConfiguration {
-    public static final int TIMEOUT = 5000;
+    public static final int TIMEOUT = 30000;
     private final RestConfigurationProperties properties;
 
     @Bean
