@@ -6,6 +6,7 @@ import com.camunda.demo.kafka.KafkaConsumerHelper;
 import com.camunda.demo.kafka.KafkaProducerHelper;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.patch;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @RunWith(SpringRunner.class)
@@ -34,6 +36,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, topics = {"producer_topic", "consumer_topic"}, brokerProperties = {"listeners=PLAINTEXT://localhost:9091", "port=9091"})
 public class DemoApplicationTests {
+    @Autowired
+    private HistoryService historyService;
+
     @Autowired
     private RuntimeService runtimeService;
 
@@ -119,6 +124,9 @@ public class DemoApplicationTests {
         String businessKey = processInstance.getBusinessKey();
         assertNotNull(businessKey);
         waitForProcessCompletion(processInstance, processInstance.getId());
+        assertThat(historyService.createHistoricProcessInstanceQuery()
+                .processInstanceId(processInstance.getId()).singleResult().getEndActivityId())
+                .isEqualTo("Event_1azol5m");
     }
 
     private void waitForProcessCompletion(ProcessInstance instance, String processInstanceId) throws InterruptedException {
