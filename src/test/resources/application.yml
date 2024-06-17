@@ -1,0 +1,84 @@
+server:
+  port: 8082
+
+spring:
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      group-id: baeldung
+test:
+  topic: embedded-test-topic
+  application:
+    name: demo-camunda
+    main:
+      banner-mode: off
+    jackson:
+      deserialization:
+        fail-on-unknown-properties: false
+  datasource:
+    url: jdbc:h2:file:./data
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      dialect: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+
+camunda.bpm:
+  enabled: true
+  auto-deployment-enabled: true
+  admin-user:
+    id: demo
+    password: demo
+    firstName: demo
+  generic-properties:
+    properties:
+      enforceHistoryTimeToLive: false
+
+app:
+  kafka:
+    enabled: true
+    bootstrapAddress: localhost:9091
+    groupId: group1
+  rest:
+    product-service:
+      host: http://localhost:8080
+      methods:
+        change-status: /status
+      mock:
+        enabled: true
+    agreement-service:
+      host: http://localhost:9099
+      methods:
+        registration-agreement: /agreements/registration
+        delete-agreement: /agreements/delete
+      mock:
+        enabled: false
+    delivery-service:
+      host: http://localhost:9097
+      methods:
+        get-date: /deliveries
+        cancellation: /deliveries
+      mock:
+        enabled: false
+    notification-service:
+      host: http://localhost:8097
+      methods:
+        order-cancellation: /notifications/order-cancellation
+        request-cancellation: /notifications/request-cancellation
+      mock:
+        enabled: true
+    payment-service:
+      host: http://localhost:9098
+      methods:
+        payment: /payment
+      mock:
+        enabled: false
