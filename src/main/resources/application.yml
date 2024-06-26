@@ -1,0 +1,72 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: demo-camunda
+    main:
+      banner-mode: off
+    jackson:
+      deserialization:
+        fail-on-unknown-properties: false
+  datasource:
+    url: ${dbUrl:jdbc:postgresql://localhost:5432/Camunda}
+    username: ${dbUsername:role_for_spring}
+    password: ${dbPassword}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+camunda.bpm:
+  admin-user:
+    id: demo
+    password: demo
+    firstName: demo
+  generic-properties:
+    properties:
+      enforceHistoryTimeToLive: false
+
+app:
+  kafka:
+    enabled: true
+    bootstrapAddress: localhost:9091
+    groupId: group1
+  rest:
+    product-service:
+      host: http://localhost:8080
+      methods:
+        change-status: /status
+      mock:
+        enabled: false
+    agreement-service:
+      host: http://localhost:8081
+      methods:
+        registration-agreement: /agreements/registration
+        delete-agreement: /agreements/delete
+      mock:
+        enabled: true
+    notification-service:
+      host: http://localhost:8081
+      methods:
+        order-cancellation: /notifications/order-cancellation
+        request-cancellation: /notifications/request-cancellation
+      mock:
+        enabled: true
+    delivery-service:
+      host: http://localhost:8081
+      methods:
+        get-date: /deliveries
+        cancellation: /deliveries
+      mock:
+        enabled: true
+    payment-service:
+      host: http://localhost:8081
+      methods:
+        payment: /payment
+      mock:
+        enabled: true
