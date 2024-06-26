@@ -14,9 +14,12 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -35,6 +38,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, topics = {"producer_topic", "consumer_topic"}, brokerProperties = {"listeners=PLAINTEXT://localhost:9091", "port=9091"})
 public class DemoApplicationTests {
+    @Autowired
+    private WebClient processServiceWebClient;
+
     @Autowired
     private HistoryService historyService;
 
@@ -82,21 +88,21 @@ public class DemoApplicationTests {
         // регистрируем договор
         wireMockAgreementServer.stubFor(post(urlEqualTo(properties.agreementServiceProperties().getMethods().getRegistrationAgreement()))
                 .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withStatus(200)));
 
         // получаем дату доставки
         wireMockDeliveryServer.stubFor(
                 post(urlEqualTo(properties.deliveryServiceProperties().getMethods().getGetDate()))
                         .willReturn(aResponse()
-                                .withHeader("Content-Type", "application/json")
+                                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .withStatus(200)));
 
         // производим оплату
         wireMockPaymentServer.stubFor(
                 post(urlEqualTo(properties.paymentServiceProperties().getMethods().getPayment()))
                         .willReturn(aResponse()
-                                .withHeader("Content-Type", "application/json")
+                                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .withStatus(200)
                                 .withBody("true")));
 
@@ -104,13 +110,20 @@ public class DemoApplicationTests {
         wireMockProductServer.stubFor(
                 patch(urlEqualTo("/orders/" + dto.getOrderId() + properties.productServiceProperties().getMethods().getChangeStatus()))
                         .willReturn(aResponse()
-                                .withHeader("Content-Type", "application/json")
+                                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .withStatus(200)));
     }
 
     @Test
     public void test() throws InterruptedException {
         // Запускаем процесс
+        WebClient
+                .post()
+                .uri(properties.agreementServiceProperties().getMethods().getDeleteAgreement() + "/" + agreementId)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .subscribe();
+
         ProcessInstance processInstance = runtimeService
                 .createProcessInstanceByKey(PROCESS_KEY)
                 .businessKey(UUID.randomUUID().toString())
